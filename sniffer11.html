@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sniffer: #1 Ranking</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --pastel-green: #d4edda;
+            --pastel-purple: #e2d1f9;
+            --deep-purple: #6f42c1;
+            --text-color: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            /* NOSE CURSOR */
+            cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' style='font-size:30px'><text y='30'>👃</text></svg>"), auto;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { font-size: 2.5rem; max-width: 800px; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .subtitle { font-style: italic; opacity: 0.8; margin-bottom: 30px;}
+
+        .reason-box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px dashed white;
+            margin: 20px auto;
+            max-width: 450px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .gen-btn {
+            background-color: var(--pastel-purple);
+            border: 2px solid var(--deep-purple);
+            color: var(--deep-purple);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1000px;
+            margin-top: 30px;
+        }
+
+        .photo-card {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transform: rotate(var(--r));
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .photo-card:hover { transform: rotate(0deg) scale(1.05); z-index: 10; cursor: pointer; }
+        .photo-card img { width: 100%; border-radius: 5px; }
+        .photo-card p { color: #4a4a4a; margin-top: 10px; font-weight: 500; }
+
+        /* PRICE TAG EFFECT */
+        .photo-card::after {
+            content: attr(data-price);
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff4757;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            transform: rotate(15deg);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .photo-card:hover::after { opacity: 1; }
+
+        .final-box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+        }
+
+        .btn-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            height: 150px; /* Give the button space to jump around */
+            position: relative;
+        }
+        #yesBtn { background-color: var(--deep-purple); color: white; padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; transition: transform 0.1s ease; z-index: 5; }
+        #noBtn { background-color: #ffb7b7; color: #4a4a4a; padding: 10px 20px; border-radius: 50px; border: none; cursor: pointer; position: absolute; z-index: 10; }
+
+        .heart { position: fixed; color: #ff6b6b; font-size: 20px; pointer-events: none; z-index: 1000; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/6dWilYAxP2aJbTTt0UsatK?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
+    <section>
+        <h1>Why I would rate <span style="color:var(--deep-purple)">Sniffer</span> as my #1 boyfriend</h1>
+        <p class="subtitle">(out of the 100,000 contenders)</p>
+    </section>
+
+    <section>
+        <h2>Reasons I love you</h2>
+        <div class="reason-box" id="reasonDisplay">
+            Click to analyze why you're the top candidate...
+        </div>
+        <button class="gen-btn" onclick="generateReason()">Next point!</button>
+    </section>
+
+    <section>
+        <h2>Our Story in Pictures</h2>
+        <div class="gallery-container">
+            <div class="photo-card" style="--r: -3deg;" data-price="+$50 Omakase Tax"><img src="https://lh3.googleusercontent.com/pw/AP1GczPROpU5Ix2Q0FNU8-2nsX2mUQVF9adTsgW31L2bDhD7S7cRs4u7OV98wDajH4cHnXG5g044_t0nJofAP7VkbK4I10ztqBr4U82UYIdhEtYnWhBbeG_eE8gotZov9yi2l-8YEUsYPaqE57ZSLvVXfBwgXA=w956-h718-s-no-gm?authuser=0" alt="HDLL"><p>you sure know how to treat me after finals</p></div>
+            <div class="photo-card" style="--r: 2deg;" data-price="+$200 Panting Fee"><img src="https://lh3.googleusercontent.com/pw/AP1GczMNbGthTDkjRgwYJpObFTI3zNcZbt3LUrJ7q045kSqyPwJ7l88GzAr531HKi252CZjj-yd-GDwI9-T8ErUvdNRoDRhrvc0Kmet4V0jmc5Uv8zFsoqWbQFU3rRUAw9rQv3o05sqx8fXGmh1xd9Kq4o3lQQ=w709-h945-s-no-gm?authuser=0" alt="IKEA"><p>i will forgive you for panting while carrying me</p></div>
+            <div class="photo-card" style="--r: -1deg;" data-price="+$0 I'm Nice"><img src="https://lh3.googleusercontent.com/pw/AP1GczMVbuk3EuMKyu3qPm7Gk6w5JTvODdFG41v-GS2E5T9Y7L92bZ3JSUez8zkuXF0mZOIhTTy0e_4uzx3UEUeRv30Oa8N_83COkYx_pVUuVdt3QC2RopshX2MT1DP_s8-uxuIHMVDUn1bVx25AYfHxuymxpQ=w956-h718-s-no-gm?authuser=0" alt="flowers"><p>1 valentine's ago!</p></div>
+            <div class="photo-card" style="--r: 5deg;" data-price="+$75 Cooking Class Fee"><img src="https://lh3.googleusercontent.com/pw/AP1GczOV3gnKVXxcaf0trxSAPG5Iagz0LDr_UJbRFHSFfT-IF9OkPmrsDFt0MlysMnaXsExvFUrNySw-Ez2Ah6FjdTNTWyYQOuugjM23HtffAtQ9_pp9aC8Qd4bS2XiMMI13E8m_Of2nwtP7QHWL-vsB4RiPPw=w709-h945-s-no-gm?authuser=0" alt="icecream"><p>to more ice cream sessions</p></div>
+            <div class="photo-card" style="--r: -1deg;" data-price="+$90 JB Toll Fee"><img src="https://lh3.googleusercontent.com/pw/AP1GczN-WVVScYy2t5UrEAlQuyZoKeHlnrbv-g_qxnz2sQinzjU9kdvCzbfTnRvq0PhoK9TyOD04vvyHFuMYF3wJlW1g1Qqdi6jIR98bZnEX2-9BwPOO7JZb7XVk9udiOQ2Y9tNUsT5QTGVwTtQfjQClMh-ORg=w709-h945-s-no-gm?authuser=0" alt="JB"><p>when are we next going?</p></div>
+            <div class="photo-card" style="--r: -3deg;" data-price="+$0 you paid for the meal"><img src="https://lh3.googleusercontent.com/pw/AP1GczP-PmiCatm2mMjw77Xf-Y_H8C0JyD1uHTFGIxDqYJvhkMmDcOM3uZQUn35TNygAPMcsypzAltej1s66ObQ3lGuYSz3H2hDo22sTWw0ibgnSVkiJul9O7imGXb1XkG1uuQDbPj5QjnsXJdRTczne6fiZvQ=w709-h945-s-no-gm?authuser=0" alt="anniv"><p>we need to start taking aesthetic, non-0.5 selfies</p></div>
+            <div class="photo-card" style="--r: 0deg;" data-price="+$99999 Gay Tax"><img src="https://lh3.googleusercontent.com/pw/AP1GczOXmn7jQQBRU9LNI41Wf-1UNcLhjUIMiHkdXyUCV6lXSA8-wocHZHvb4GUY-L9qJpjGVhU-uDr_8qR64dS3-fRUOAcJX7TW8Y-1cx0cdqSAFumXlbhyIXBB5HE7VGuS6lRG39Z4vDU0m6xmUy_iP4JfWQ=w711-h945-s-no-gm?authuser=0" alt="gay"><p>haha gay</p></div>
+            <div class="photo-card" style="--r: 7deg;" data-price="+$20 Scolding Fee"><img src="https://lh3.googleusercontent.com/pw/AP1GczPgBrV-iY9U22vYFD9_N2fKDcW_nm13c0sGXJUEdiOopmWHqJwKh24FnAT_gLydPDhEO4dwfkcOykSQMpMLsQfbbsC7e9v1W49rIgjtb_k0UUiOJ7IC5nwFDZbru2mfzCP9IvBlLlZhXJ3YpSTyb4M6TA=w956-h718-s-no-gm?authuser=0" alt="oi"><p>haha cute</p></div>
+            <div class="photo-card" style="--r: -3deg;" data-price="+$1000 you look like you're struggling"><img src="https://lh3.googleusercontent.com/pw/AP1GczMGwr57o0mfKX9z7QS_HYmP6Ce_PL4jrdDK0GgG8KbbTAAs3cTFuRFFyO-gdxCAzLCIFzsgbEZMTNLT-sQHFx7YJyKrJP6pqPvWUOvLJ2QGP8TuRiGBYE2NkSxINtVSdTnOlCRsBxz__otHHIavpiX0LQ=w709-h945-s-no-gm?authuser=0" alt="us"><p>teehee our first aesthetic pic!</p></div>
+            <div class="photo-card" style="--r: -1deg;" data-price="+$20 why am I upside down"><img src="https://lh3.googleusercontent.com/pw/AP1GczMazsVfLv_GEe9UlXDmBEoMTLlDxSKUcR15cmK0DpSL6BVCtAtYkmS_qpnU2eXKahLS2LxXRwxzNRo9-WM7ZUa_8r6Jvqj4OgLf7dj5Tv1qCHhxqoJwBKiCLG28mSth6so2vvoWrdWbEwHethtHME3MIg=w709-h945-s-no-gm?authuser=0" alt="Us"><p>so cute</p></div>
+            <div class="photo-card" style="--r: -1deg;" data-price="+$40 Performative Surcharge"><img src="https://lh3.googleusercontent.com/pw/AP1GczPUse50aD39OlyYhfGBej6RWZKblhw1XUpeJfCxGbpS5pLoeD7yyKJNXaMWwCqQXp9iautUm7H1qWIBUVwUbnGC_Vjj1ITYbuB9hub2zzSiS3fSAsLcmmc1Lq9-ReeckyWgnGaANVeOF2TtP_I_gvnxQw=w709-h945-s-no-gm?authuser=0" alt="Us"><p>performative art couple moment</p></div>
+            <div class="photo-card" style="--r: -1deg;" data-price="+$0 Last Chance"><img src="https://lh3.googleusercontent.com/pw/AP1GczPRMZuGyVeIHhmMU2Tkk1ngF2NqrU-Dsi-H-rGwEUBH3L17y04fOnOJOWYos4dMY2_Ywe0T1w9RV3W58-hD7EhgrHT8xKuxPAzVVt9O3jCpiEaVoXsV8gVCPQU0cSacsmdT5qF5GmPhm4EwMDDV4Hfm_A=w709-h945-s-no-gm?authuser=0" alt="dum"><p>domesticated bf!</p></div>
+        </div>
+    </section>
+
+    <section id="finale">
+        <div class="final-box">
+            <h3>Final Assessment, No Cheating</h3>
+            <p>am i damn smart for making this entire website and</p>
+            <p><strong>do you owe me a really nice and expensive omakase/fine dining with an amazing view and a minimum spend of $800 per pax?</strong></p>
+            <div class="btn-container" id="container">
+                <button id="yesBtn" onclick="celebrate()">YES, ABSOLUTELY</button>
+                <button id="noBtn" onmouseover="moveNo()">NO</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Tab Title Logic
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                document.title = "COME BACK TO THIS TAB😤";
+            } else {
+                document.title = "Good. Stay in this tab. 🏆";
+            }
+        });
+
+        const reasons = [
+            "you massage me all the time (pls never stop)",
+            "you are incredibly patient with me",
+            "i never have to carry my bag with you!",
+            "free food for me haha....",
+            "you're the only one i willingly share food with",
+            "you got me insane headphones which i use all the time",
+            "you make me feel like a princess",
+            "you tolerate me so well",
+            "you find the best food, and you're willing to try all sorts of things with me",
+            "i never have to go home alone when i'm with you",
+            "i get the most insane welfare packs",
+            "you'd travel to the other side of the country for me",
+            "you go absolutely feral when you see me in a dress",
+            "you are as fatass as me (though you could be more fatass you know)",
+            "you (hopefully) don't get icked out by my auntie ways",
+            "you do the thinking for me although not 100% accuracy",
+            "you make me want to create a whole website for you"
+        ];
+
+        function generateReason() {
+            const display = document.getElementById('reasonDisplay');
+            const randomReason = reasons[Math.floor(Math.random() * reasons.length)];
+            display.innerText = randomReason;
+            display.style.transform = "scale(1.05)";
+            setTimeout(() => { display.style.transform = "scale(1)"; }, 150);
+        }
+
+        let yesSize = 1;
+        function moveNo() {
+            const noBtn = document.getElementById('noBtn');
+            const yesBtn = document.getElementById('yesBtn');
+            const container = document.getElementById('container');
+            
+            // MATH FIX: Calculate bounds within the 'container' div
+            const maxX = container.clientWidth - noBtn.offsetWidth;
+            const maxY = container.clientHeight - noBtn.offsetHeight;
+            
+            const newX = Math.floor(Math.random() * maxX);
+            const newY = Math.floor(Math.random() * maxY);
+            
+            noBtn.style.left = newX + 'px';
+            noBtn.style.top = newY + 'px';
+            
+            yesSize += 0.15;
+            yesBtn.style.transform = `scale(${yesSize})`;
+        }
+
+        function celebrate() {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = Math.random() * 2 + 3 + 's';
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 5000);
+            }, 150);
+
+            setTimeout(() => {
+                alert("good choice. start saving up yea❤️");
+            }, 500);
+        }
+    </script>
+</body>
+</html>
