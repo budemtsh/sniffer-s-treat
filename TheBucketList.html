@@ -1,0 +1,568 @@
+​<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Bucket List</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --sage: #7C9A82; --sage-light: #C2D4C6; --sage-bg: #F4F7F5;
+            --warm: #D4956A; --warm-light: #F0D5C0;
+            --sand: #E8DFD4; --sand-light: #F5F0EB;
+            --text: #3D3D3D; --text-light: #8A8A8A; --white: #FFFFFF;
+            --shadow: 0 2px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.10);
+            --radius: 16px; --radius-sm: 10px;
+            --accent: var(--sage);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Nunito',sans-serif; background:var(--sage-bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+        .setup-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem; background:linear-gradient(135deg,var(--sage-light),var(--sand),var(--warm-light)); animation:grad 10s ease infinite; background-size:400% 400%; }
+        @keyframes grad { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .setup-card { background:var(--white); border-radius:24px; padding:2.5rem; box-shadow:var(--shadow-lg); text-align:center; max-width:400px; width:100%; }
+        .setup-card h1 { font-size:1.8rem; margin-bottom:0.3rem; }
+        .setup-card .sub { color:var(--text-light); margin-bottom:1.5rem; font-size:0.95rem; }
+        .setup-input { width:100%; padding:12px 16px; border:2px solid var(--sand); border-radius:var(--radius-sm); font-family:inherit; font-size:1rem; margin-bottom:1rem; outline:none; transition:border-color .3s; }
+        .setup-input:focus { border-color:var(--sage); }
+        .setup-and { font-size:0.9rem; color:var(--text-light); margin:0.3rem 0; font-weight:600; }
+
+        .btn-primary { background:var(--sage); color:white; border:none; padding:14px 32px; border-radius:50px; font-family:inherit; font-size:1rem; font-weight:700; cursor:pointer; transition:transform .2s,box-shadow .2s; box-shadow:0 4px 15px rgba(124,154,130,0.3); }
+        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(124,154,130,0.4); }
+        .btn-primary:active { transform:translateY(0); }
+
+        .app { display:none; padding-bottom:80px; }
+        .app.active { display:block; }
+
+        .header { background:var(--sage); color:white; padding:1.5rem 1.5rem 2rem; border-radius:0 0 30px 30px; text-align:center; position:relative; }
+        .header h1 { font-size:1.4rem; font-weight:800; letter-spacing:-0.3px; }
+        .header .couple-names { font-size:0.9rem; opacity:0.85; margin:4px 0; }
+        .progress-bar { background:rgba(255,255,255,0.25); border-radius:50px; height:6px; margin-top:12px; overflow:hidden; max-width:220px; margin-left:auto; margin-right:auto; }
+        .progress-fill { background:white; height:100%; border-radius:50px; transition:width .5s ease; }
+        .progress-text { font-size:0.78rem; opacity:0.8; margin-top:6px; }
+        .header-settings { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,0.2); border:none; color:white; width:34px; height:34px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+        .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--white); display:flex; justify-content:space-around; padding:8px 0 12px; box-shadow:0 -2px 20px rgba(0,0,0,0.05); z-index:100; border-radius:18px 18px 0 0; }
+        .nav-btn { background:none; border:none; padding:8px 16px; font-family:inherit; font-size:0.72rem; font-weight:600; color:var(--text-light); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; transition:color .3s; }
+        .nav-btn .nav-icon { font-size:1.3rem; }
+        .nav-btn.active { color:var(--sage); }
+
+        .tab-content { display:none; padding:1.2rem; }
+        .tab-content.active { display:block; }
+
+        .fab { position:fixed; bottom:86px; right:20px; width:52px; height:52px; border-radius:50%; background:var(--sage); color:white; border:none; font-size:1.6rem; cursor:pointer; box-shadow:0 4px 18px rgba(124,154,130,0.35); z-index:99; transition:transform .3s,box-shadow .3s; display:flex; align-items:center; justify-content:center; }
+        .fab:hover { transform:scale(1.1); box-shadow:0 6px 22px rgba(124,154,130,0.45); }
+
+        .item-card { background:var(--white); border-radius:var(--radius); padding:1.1rem 1.2rem; margin-bottom:0.8rem; box-shadow:var(--shadow); transition:transform .2s; animation:slideUp .3s ease; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        .item-card:hover { transform:translateY(-2px); }
+        .item-card-header { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+        .category-badge { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0; }
+        .cat-travel{background:#E3EEFA} .cat-food{background:#FFF3E0} .cat-adventure{background:#E5F0E8} .cat-experience{background:#F0ECF5} .cat-creative{background:#FFF8E1} .cat-romance{background:#FCE8EC} .cat-goals{background:#E0F2F1} .cat-other{background:#F0F0F0}
+        .item-title { font-weight:700; font-size:1rem; flex:1; }
+        .item-desc { color:var(--text-light); font-size:0.85rem; margin-bottom:6px; }
+        .item-location { color:var(--sage); font-size:0.82rem; margin-bottom:6px; }
+        .item-footer { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+        .item-meta { font-size:0.78rem; color:var(--text-light); display:flex; align-items:center; gap:4px; }
+        .avatar { width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700; color:white; }
+        .avatar-1{background:var(--warm)} .avatar-2{background:var(--sage)}
+        .btn-complete { background:var(--sage-light); color:#4A7350; border:none; padding:7px 14px; border-radius:50px; font-family:inherit; font-weight:700; font-size:0.82rem; cursor:pointer; transition:all .2s; }
+        .btn-complete:hover { background:var(--sage); color:white; }
+        .btn-edit { background:none; border:none; color:#ccc; cursor:pointer; font-size:0.95rem; padding:3px; transition:color .2s; line-height:1; }
+        .btn-edit:hover { color:var(--warm); }
+        .btn-delete { background:none; border:none; color:#ddd; cursor:pointer; font-size:1.1rem; padding:3px; transition:color .2s; line-height:1; }
+        .btn-delete:hover { color:#D4695A; }
+        .card-top-btns { display:flex; gap:2px; }
+
+        .memory-card { background:var(--white); border-radius:var(--radius); overflow:hidden; margin-bottom:1rem; box-shadow:var(--shadow); animation:slideUp .3s ease; cursor:pointer; transition:transform .2s; }
+        .memory-card:hover { transform:translateY(-2px); }
+        .memory-photos { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:2px; max-height:200px; overflow:hidden; }
+        .memory-photos img { width:100%; height:120px; object-fit:cover; }
+        .memory-photos.single img { height:200px; }
+        .memory-body { padding:1.1rem; }
+        .memory-title { font-weight:700; font-size:1.05rem; display:flex; align-items:center; gap:8px; }
+        .memory-date { color:var(--text-light); font-size:0.82rem; margin:3px 0; }
+        .memory-notes { color:var(--text); font-size:0.88rem; margin-top:6px; font-style:italic; }
+        .star-rating { color:var(--warm); font-size:0.95rem; margin-top:4px; letter-spacing:1px; }
+
+        .empty-state { text-align:center; padding:3rem 1.5rem; color:var(--text-light); }
+        .empty-state .emoji { font-size:2.5rem; margin-bottom:0.8rem; }
+        .empty-state h3 { color:var(--text); margin-bottom:0.4rem; font-size:1.05rem; }
+
+        .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:200; align-items:flex-end; justify-content:center; backdrop-filter:blur(3px); }
+        .modal-overlay.active { display:flex; }
+        .modal { background:var(--white); border-radius:20px 20px 0 0; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; padding:1.5rem; animation:slideModal .3s ease; }
+        @keyframes slideModal { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .modal-handle { width:36px; height:4px; background:#DDD; border-radius:2px; margin:0 auto 1rem; }
+        .modal h2 { font-size:1.2rem; margin-bottom:1.1rem; text-align:center; }
+        .form-group { margin-bottom:1rem; }
+        .form-group label { display:block; font-weight:700; font-size:0.85rem; margin-bottom:5px; color:var(--text); }
+        .form-input,.form-select,.form-textarea { width:100%; padding:11px 14px; border:2px solid #ECEAE6; border-radius:var(--radius-sm); font-family:inherit; font-size:0.95rem; outline:none; transition:border-color .3s; background:white; }
+        .form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--sage); }
+        .form-textarea { resize:vertical; min-height:80px; }
+        .who-btns { display:flex; gap:8px; }
+        .who-btn { flex:1; padding:10px; border:2px solid #ECEAE6; border-radius:var(--radius-sm); background:var(--white); font-family:inherit; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; }
+        .who-btn.active { border-color:var(--sage); background:var(--sage-bg); color:var(--sage); }
+        .photo-upload-area { border:2px dashed var(--sand); border-radius:var(--radius-sm); padding:1.3rem; text-align:center; cursor:pointer; transition:all .2s; color:var(--text-light); font-size:0.9rem; }
+        .photo-upload-area:hover { border-color:var(--sage); background:var(--sage-bg); }
+        .photo-preview { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+        .photo-preview-item { position:relative; width:72px; height:72px; border-radius:8px; overflow:hidden; }
+        .photo-preview-item img { width:100%; height:100%; object-fit:cover; }
+        .photo-preview-item .remove-photo { position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.5); color:white; border:none; width:18px; height:18px; border-radius:50%; font-size:0.65rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .star-selector { display:flex; gap:4px; }
+        .star-btn { background:none; border:none; font-size:1.4rem; cursor:pointer; transition:transform .2s; padding:0; }
+        .star-btn:hover { transform:scale(1.2); }
+
+        #map { height:calc(100vh - 200px); border-radius:var(--radius); margin-top:0.5rem; z-index:1; }
+        .map-legend { background:var(--white); border-radius:var(--radius-sm); padding:8px 14px; margin-bottom:8px; box-shadow:var(--shadow); display:flex; gap:16px; font-size:0.82rem; justify-content:center; color:var(--text-light); }
+        .marker-dot { font-size:1.5rem; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25)); text-align:center; line-height:1; }
+        .marker-pending { opacity:0.6; }
+        .leaflet-popup-content-wrapper { border-radius:14px!important; box-shadow:var(--shadow-lg)!important; }
+        .leaflet-popup-content { margin:10px!important; font-family:'Nunito',sans-serif!important; }
+
+        .confetti-container { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:300; }
+        .confetti-piece { position:absolute; top:-20px; animation:confettiFall 3s ease-out forwards; }
+        @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+        .settings-panel { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+        .settings-panel.active { display:flex; }
+        .settings-card { background:var(--white); border-radius:20px; padding:1.8rem; max-width:380px; width:90%; box-shadow:var(--shadow-lg); }
+        .settings-card h2 { text-align:center; margin-bottom:1rem; font-size:1.15rem; }
+        .settings-btn { width:100%; padding:11px; border:2px solid #ECEAE6; border-radius:var(--radius-sm); background:var(--white); font-family:inherit; font-size:0.9rem; font-weight:600; cursor:pointer; margin-bottom:8px; transition:all .2s; display:flex; align-items:center; gap:8px; }
+        .settings-btn:hover { border-color:var(--sage); background:var(--sage-bg); }
+        .settings-btn.danger { color:#C0392B; }
+        .settings-btn.danger:hover { border-color:#C0392B; background:#FDF2F2; }
+
+        .view-modal-content { text-align:center; }
+        .view-modal-photos { display:flex; overflow-x:auto; gap:8px; padding:8px 0; scroll-snap-type:x mandatory; justify-content:center; }
+        .view-modal-photos img { max-height:240px; border-radius:12px; scroll-snap-align:center; flex-shrink:0; }
+        .view-modal-notes { background:var(--sand-light); border-radius:var(--radius-sm); padding:1rem; margin-top:1rem; font-style:italic; text-align:left; font-size:0.92rem; }
+        .location-hint { font-size:0.72rem; color:var(--text-light); margin-top:4px; font-style:italic; }
+
+        @media(min-width:600px) {
+            .modal { border-radius:20px; margin-bottom:2rem; max-height:80vh; }
+            .modal-overlay { align-items:center; }
+            .tab-content { max-width:560px; margin:0 auto; }
+        }
+    </style>
+</head>
+<body>
+    <div id="setup-screen" class="setup-screen">
+        <div class="setup-card">
+            <h1>Our Bucket List</h1>
+            <p class="sub">All the things we want to do together.</p>
+            <input type="text" id="name1" class="setup-input" placeholder="Your name" maxlength="20">
+            <div class="setup-and">&</div>
+            <input type="text" id="name2" class="setup-input" placeholder="Partner's name" maxlength="20">
+            <br>
+            <button class="btn-primary" onclick="setupApp()">Let's go</button>
+        </div>
+    </div>
+
+    <div id="app" class="app">
+        <div class="header">
+            <button class="header-settings" onclick="openSettings()">⚙</button>
+            <h1>Our Bucket List</h1>
+            <div class="couple-names" id="couple-names"></div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-text" id="progress-text"></div>
+        </div>
+        <div id="tab-bucket" class="tab-content active"><div id="bucket-list"></div></div>
+        <div id="tab-memories" class="tab-content"><div id="memory-list"></div></div>
+        <div id="tab-map" class="tab-content">
+            <div class="map-legend">
+                <span>📍 want to go</span>
+                <span>✦ been there</span>
+            </div>
+            <div id="map"></div>
+        </div>
+        <button class="fab" id="fab-btn" onclick="openAddModal()">+</button>
+        <div class="bottom-nav">
+            <button class="nav-btn active" data-tab="bucket" onclick="switchTab('bucket')"><span class="nav-icon">📋</span><span>The List</span></button>
+            <button class="nav-btn" data-tab="memories" onclick="switchTab('memories')"><span class="nav-icon">📸</span><span>Memories</span></button>
+            <button class="nav-btn" data-tab="map" onclick="switchTab('map')"><span class="nav-icon">🗺️</span><span>Our Map</span></button>
+        </div>
+    </div>
+
+    <!-- ADD -->
+    <div class="modal-overlay" id="add-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <h2>Add something new</h2>
+            <div class="form-group"><label>What do we want to do?</label><input type="text" class="form-input" id="add-title" placeholder="e.g., See the Northern Lights"></div>
+            <div class="form-group"><label>Category</label>
+                <select class="form-select" id="add-category">
+                    <option value="travel">✈️ Travel</option><option value="food">🍽️ Food</option>
+                    <option value="adventure">🏔️ Adventure</option><option value="experience">🎭 Experience</option>
+                    <option value="creative">🎨 Creative</option><option value="romance">🌙 Date idea</option>
+                    <option value="goals">🎯 Goal</option><option value="other">📌 Other</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Location <span style="font-weight:400;color:var(--text-light)">(optional)</span></label><input type="text" class="form-input" id="add-location" placeholder="e.g., Taipei, Taiwan"><div class="location-hint">Tip: be specific — "Taipei, Taiwan" works better than just "Taiwan"</div></div>
+            <div class="form-group"><label>Notes</label><textarea class="form-textarea" id="add-desc" placeholder="Details, links, ideas..."></textarea></div>
+            <div class="form-group"><label>Added by</label>
+                <div class="who-btns">
+                    <button class="who-btn active" data-who="1" onclick="selectWho(this,'add')"><span id="who-name1"></span></button>
+                    <button class="who-btn" data-who="2" onclick="selectWho(this,'add')"><span id="who-name2"></span></button>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:1rem;">
+                <button class="btn-primary" style="flex:1" onclick="addItem()">Add to list</button>
+                <button class="btn-primary" style="flex:0;background:var(--sand);color:var(--text);box-shadow:none;" onclick="closeModal('add-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <h2>Edit</h2>
+            <div class="form-group"><label>What do we want to do?</label><input type="text" class="form-input" id="edit-title"></div>
+            <div class="form-group"><label>Category</label>
+                <select class="form-select" id="edit-category">
+                    <option value="travel">✈️ Travel</option><option value="food">🍽️ Food</option>
+                    <option value="adventure">🏔️ Adventure</option><option value="experience">🎭 Experience</option>
+                    <option value="creative">🎨 Creative</option><option value="romance">🌙 Date idea</option>
+                    <option value="goals">🎯 Goal</option><option value="other">📌 Other</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Location <span style="font-weight:400;color:var(--text-light)">(optional)</span></label><input type="text" class="form-input" id="edit-location" placeholder="e.g., Taipei, Taiwan"><div class="location-hint">Tip: be specific — "Taipei, Taiwan" works better than just "Taiwan"</div></div>
+            <div class="form-group"><label>Notes</label><textarea class="form-textarea" id="edit-desc"></textarea></div>
+            <div class="form-group"><label>Added by</label>
+                <div class="who-btns" id="edit-who-btns">
+                    <button class="who-btn" data-who="1" onclick="selectWho(this,'edit')"><span id="edit-who-name1"></span></button>
+                    <button class="who-btn" data-who="2" onclick="selectWho(this,'edit')"><span id="edit-who-name2"></span></button>
+                </div>
+            </div>
+            <input type="hidden" id="edit-item-id">
+            <div style="display:flex;gap:8px;margin-top:1rem;">
+                <button class="btn-primary" style="flex:1" onclick="saveEdit()">Save</button>
+                <button class="btn-primary" style="flex:0;background:var(--sand);color:var(--text);box-shadow:none;" onclick="closeModal('edit-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPLETE -->
+    <div class="modal-overlay" id="complete-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <h2>We did it! 🎉</h2>
+            <p id="complete-item-title" style="text-align:center;font-weight:700;font-size:1.05rem;margin-bottom:1rem;"></p>
+            <div class="form-group"><label>When?</label><input type="date" class="form-input" id="complete-date"></div>
+            <div class="form-group"><label>Photos</label>
+                <div class="photo-upload-area" onclick="document.getElementById('photo-input').click()">📷 Tap to add photos<div style="font-size:0.75rem;margin-top:3px">Up to 5</div></div>
+                <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)">
+                <div class="photo-preview" id="photo-preview"></div>
+            </div>
+            <div class="form-group"><label>How was it?</label><textarea class="form-textarea" id="complete-notes" placeholder="Write something about the experience..."></textarea></div>
+            <div class="form-group"><label>Rating</label><div class="star-selector" id="star-selector"></div></div>
+            <input type="hidden" id="complete-item-id">
+            <div style="display:flex;gap:8px;margin-top:1rem;">
+                <button class="btn-primary" style="flex:1" onclick="completeItem()">Save memory</button>
+                <button class="btn-primary" style="flex:0;background:var(--sand);color:var(--text);box-shadow:none;" onclick="closeModal('complete-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW MEMORY -->
+    <div class="modal-overlay" id="view-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="view-modal-content" id="view-modal-content"></div>
+            <button class="btn-primary" style="width:100%;margin-top:1rem;background:var(--sand);color:var(--text);box-shadow:none;" onclick="closeModal('view-modal')">Close</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-card">
+            <h2>Settings</h2>
+            <div class="form-group"><label>Your name</label><input type="text" class="form-input" id="settings-name1" maxlength="20"></div>
+            <div class="form-group"><label>Partner's name</label><input type="text" class="form-input" id="settings-name2" maxlength="20"></div>
+            <button class="settings-btn" onclick="saveSettings()">💾 Save names</button>
+            <button class="settings-btn" onclick="exportData()">📤 Export data</button>
+            <button class="settings-btn" onclick="document.getElementById('import-input').click()">📥 Import data</button>
+            <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
+            <button class="settings-btn danger" onclick="clearAllData()">🗑 Clear all data</button>
+            <br>
+            <button class="btn-primary" style="width:100%;background:var(--sand);color:var(--text);box-shadow:none;" onclick="closeSettings()">Close</button>
+        </div>
+    </div>
+    <div class="confetti-container" id="confetti"></div>
+
+<script>
+const STORAGE_KEY='ourBucketList';
+let appData={users:{name1:'',name2:''},items:[]};
+let currentRating=0,tempPhotos=[],map=null,markers=[];
+const CAT={travel:'✈️',food:'🍽️',adventure:'🏔️',experience:'🎭',creative:'🎨',romance:'🌙',goals:'🎯',other:'📌'};
+
+function loadData(){const s=localStorage.getItem(STORAGE_KEY);if(s)try{appData=JSON.parse(s)}catch(e){}}
+function saveData(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(appData))}catch(e){alert('Storage full — export your data first.')}}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).substring(2)}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function setupApp(){
+    const n1=document.getElementById('name1').value.trim(),n2=document.getElementById('name2').value.trim();
+    if(!n1||!n2){alert('Enter both names!');return}
+    appData.users={name1:n1,name2:n2};saveData();
+    document.getElementById('setup-screen').style.display='none';
+    document.getElementById('app').classList.add('active');initApp();
+}
+function initApp(){
+    document.getElementById('couple-names').textContent=appData.users.name1+' & '+appData.users.name2;
+    document.getElementById('who-name1').textContent=appData.users.name1;
+    document.getElementById('who-name2').textContent=appData.users.name2;
+    document.getElementById('edit-who-name1').textContent=appData.users.name1;
+    document.getElementById('edit-who-name2').textContent=appData.users.name2;
+    buildStars();updateProgress();renderBucket();renderMemories();
+    document.getElementById('complete-date').value=new Date().toISOString().split('T')[0];
+}
+function switchTab(t){
+    document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
+    document.getElementById('tab-'+t).classList.add('active');
+    document.querySelector('[data-tab="'+t+'"]').classList.add('active');
+    if(t==='map'){document.getElementById('fab-btn').style.display='none';setTimeout(()=>initMap(),150)}
+    else{document.getElementById('fab-btn').style.display='flex'}
+}
+function updateProgress(){
+    const total=appData.items.length,done=appData.items.filter(i=>i.completed).length;
+    const pct=total>0?(done/total*100):0;
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('progress-text').textContent=done+'/'+total+' done';
+}
+
+function renderBucket(){
+    const c=document.getElementById('bucket-list'),pending=appData.items.filter(i=>!i.completed);
+    if(!pending.length){c.innerHTML='<div class="empty-state"><div class="emoji">📝</div><h3>Nothing here yet</h3><p>Tap + to add your first item</p></div>';return}
+    c.innerHTML=pending.map(it=>{
+        const em=CAT[it.category]||'📌',who=it.addedBy==='1'?appData.users.name1:appData.users.name2;
+        const ac=it.addedBy==='1'?'avatar-1':'avatar-2',ini=who.charAt(0).toUpperCase();
+        return `<div class="item-card">
+            <div class="item-card-header">
+                <div class="category-badge cat-${it.category}">${em}</div>
+                <div class="item-title">${esc(it.title)}</div>
+                <div class="card-top-btns">
+                    <button class="btn-edit" onclick="openEditModal('${it.id}')" title="Edit">✏️</button>
+                    <button class="btn-delete" onclick="deleteItem('${it.id}')" title="Remove">×</button>
+                </div>
+            </div>
+            ${it.description?`<div class="item-desc">${esc(it.description)}</div>`:''}
+            ${it.location?`<div class="item-location">📍 ${esc(it.location)}</div>`:''}
+            <div class="item-footer">
+                <div class="item-meta"><span class="avatar ${ac}">${ini}</span> ${esc(who)}</div>
+                <button class="btn-complete" onclick="openCompleteModal('${it.id}')">Done ✓</button>
+            </div>
+        </div>`}).join('');
+}
+
+function renderMemories(){
+    const c=document.getElementById('memory-list');
+    const done=appData.items.filter(i=>i.completed).sort((a,b)=>(b.completedData?.date||'').localeCompare(a.completedData?.date||''));
+    if(!done.length){c.innerHTML='<div class="empty-state"><div class="emoji">📸</div><h3>No memories yet</h3><p>Complete something from your list to start</p></div>';return}
+    c.innerHTML=done.map(it=>{
+        const em=CAT[it.category]||'📌',cd=it.completedData||{},photos=cd.photos||[];
+        const ds=cd.date?new Date(cd.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+        const stars='★'.repeat(cd.rating||0)+'☆'.repeat(5-(cd.rating||0));
+        let ph='';
+        if(photos.length){const gc=photos.length===1?'memory-photos single':'memory-photos';
+            ph=`<div class="${gc}">${photos.slice(0,4).map(p=>`<img src="${p}" alt="">`).join('')}</div>`}
+        return `<div class="memory-card" onclick="viewMemory('${it.id}')">
+            ${ph}<div class="memory-body">
+                <div class="memory-title">${em} ${esc(it.title)}</div>
+                ${ds?`<div class="memory-date">${ds}</div>`:''}
+                <div class="star-rating">${stars}</div>
+                ${cd.notes?`<div class="memory-notes">"${esc(cd.notes.substring(0,100))}${cd.notes.length>100?'...':''}"</div>`:''}
+            </div></div>`}).join('');
+}
+
+function openAddModal(){
+    ['add-title','add-location','add-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('add-category').value='travel';
+    document.querySelectorAll('#add-modal .who-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelector('#add-modal .who-btn[data-who="1"]').classList.add('active');
+    openModal('add-modal');
+}
+function selectWho(btn,ctx){
+    const container=ctx==='edit'?'#edit-modal':'#add-modal';
+    document.querySelectorAll(container+' .who-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+}
+function addItem(){
+    const title=document.getElementById('add-title').value.trim();
+    if(!title){alert('Give it a name!');return}
+    const item={id:genId(),title,category:document.getElementById('add-category').value,
+        location:document.getElementById('add-location').value.trim(),
+        description:document.getElementById('add-desc').value.trim(),
+        addedBy:document.querySelector('#add-modal .who-btn.active')?.dataset.who||'1',
+        dateAdded:new Date().toISOString().split('T')[0],completed:false,completedData:null,coords:null};
+    if(item.location)geocode(item.location).then(co=>{if(co){item.coords=co;saveData()}});
+    appData.items.push(item);saveData();closeModal('add-modal');renderBucket();updateProgress();
+}
+
+function openEditModal(id){
+    const it=appData.items.find(i=>i.id===id);if(!it)return;
+    document.getElementById('edit-item-id').value=id;
+    document.getElementById('edit-title').value=it.title;
+    document.getElementById('edit-category').value=it.category;
+    document.getElementById('edit-location').value=it.location||'';
+    document.getElementById('edit-desc').value=it.description||'';
+    document.querySelectorAll('#edit-modal .who-btn').forEach(b=>b.classList.remove('active'));
+    const whoBtn=document.querySelector('#edit-modal .who-btn[data-who="'+(it.addedBy||'1')+'"]');
+    if(whoBtn)whoBtn.classList.add('active');
+    openModal('edit-modal');
+}
+async function saveEdit(){
+    const id=document.getElementById('edit-item-id').value;
+    const it=appData.items.find(i=>i.id===id);if(!it)return;
+    const newTitle=document.getElementById('edit-title').value.trim();
+    if(!newTitle){alert('Give it a name!');return}
+    const oldLoc=it.location;
+    it.title=newTitle;
+    it.category=document.getElementById('edit-category').value;
+    it.location=document.getElementById('edit-location').value.trim();
+    it.description=document.getElementById('edit-desc').value.trim();
+    it.addedBy=document.querySelector('#edit-modal .who-btn.active')?.dataset.who||'1';
+    if(it.location!==oldLoc){it.coords=null;if(it.location){const co=await geocode(it.location);if(co)it.coords=co}}
+    saveData();closeModal('edit-modal');renderBucket();renderMemories();updateProgress();
+}
+
+function openCompleteModal(id){
+    const it=appData.items.find(i=>i.id===id);if(!it)return;
+    document.getElementById('complete-item-id').value=id;
+    document.getElementById('complete-item-title').textContent=(CAT[it.category]||'')+' '+it.title;
+    document.getElementById('complete-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('complete-notes').value='';
+    document.getElementById('photo-preview').innerHTML='';
+    tempPhotos=[];currentRating=0;updateStarBtns();openModal('complete-modal');
+}
+function buildStars(){
+    const c=document.getElementById('star-selector');c.innerHTML='';
+    for(let i=1;i<=5;i++){const b=document.createElement('button');b.className='star-btn';b.textContent='☆';b.onclick=()=>setRating(i);c.appendChild(b)}
+}
+function setRating(r){currentRating=r;updateStarBtns()}
+function updateStarBtns(){document.querySelectorAll('#star-selector .star-btn').forEach((b,i)=>{b.textContent=i<currentRating?'★':'☆'})}
+
+async function handlePhotos(input){
+    const files=Array.from(input.files).slice(0,5-tempPhotos.length);
+    for(const f of files){if(tempPhotos.length>=5)break;tempPhotos.push(await compressImg(f))}
+    renderPhotoPrev();input.value='';
+}
+function compressImg(file){
+    return new Promise(res=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{
+        const c=document.createElement('canvas');let w=img.width,h=img.height;
+        if(w>600){h=h*600/w;w=600}c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',0.5))};img.src=e.target.result};r.readAsDataURL(file)})
+}
+function renderPhotoPrev(){
+    document.getElementById('photo-preview').innerHTML=tempPhotos.map((p,i)=>
+        `<div class="photo-preview-item"><img src="${p}"><button class="remove-photo" onclick="removePhoto(${i})">×</button></div>`).join('');
+}
+function removePhoto(i){tempPhotos.splice(i,1);renderPhotoPrev()}
+
+function completeItem(){
+    const id=document.getElementById('complete-item-id').value,it=appData.items.find(i=>i.id===id);if(!it)return;
+    it.completed=true;it.completedData={date:document.getElementById('complete-date').value,
+        notes:document.getElementById('complete-notes').value.trim(),photos:[...tempPhotos],rating:currentRating||3};
+    saveData();closeModal('complete-modal');renderBucket();renderMemories();updateProgress();showConfetti();
+}
+
+function viewMemory(id){
+    const it=appData.items.find(i=>i.id===id);if(!it||!it.completedData)return;
+    const cd=it.completedData,em=CAT[it.category]||'📌';
+    const ds=cd.date?new Date(cd.date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';
+    const stars='★'.repeat(cd.rating||0)+'☆'.repeat(5-(cd.rating||0));
+    const who=it.addedBy==='1'?appData.users.name1:appData.users.name2;
+    let ph='';if(cd.photos?.length)ph='<div class="view-modal-photos">'+cd.photos.map(p=>`<img src="${p}">`).join('')+'</div>';
+    document.getElementById('view-modal-content').innerHTML=
+        `<h2>${em} ${esc(it.title)}</h2>
+        ${ds?`<p style="color:var(--text-light)">${ds}</p>`:''}
+        ${it.location?`<p style="color:var(--sage)">📍 ${esc(it.location)}</p>`:''}
+        <div class="star-rating" style="font-size:1.2rem;margin:8px 0">${stars}</div>${ph}
+        ${cd.notes?`<div class="view-modal-notes">${esc(cd.notes)}</div>`:''}
+        <p style="color:var(--text-light);font-size:0.82rem;margin-top:1rem">Added by ${esc(who)}</p>`;
+    openModal('view-modal');
+}
+
+function deleteItem(id){if(!confirm('Remove this?'))return;appData.items=appData.items.filter(i=>i.id!==id);saveData();renderBucket();renderMemories();updateProgress()}
+
+async function geocode(loc){
+    try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(loc)+'&limit=1',
+        {headers:{'User-Agent':'OurBucketListApp/1.0'}});const d=await r.json();
+        if(d.length)return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}}catch(e){}return null
+}
+async function initMap(){
+    if(!map){map=L.map('map').setView([20,0],2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map)}
+    setTimeout(()=>map.invalidateSize(),200);
+    markers.forEach(m=>map.removeLayer(m));markers=[];
+    const locItems=appData.items.filter(i=>i.location),bounds=[];
+    for(const it of locItems){
+        if(!it.coords){const co=await geocode(it.location);if(co){it.coords=co;saveData()}}
+        if(it.coords){
+            const done=it.completed;
+            const icon=L.divIcon({className:'marker-dot'+(done?'':' marker-pending'),html:done?'✦':'📍',iconSize:[26,26],iconAnchor:[13,13]});
+            const mk=L.marker([it.coords.lat,it.coords.lng],{icon});
+            let pop=`<div style="min-width:170px;font-family:Nunito,sans-serif">
+                <div style="font-weight:700;font-size:0.95rem;margin-bottom:3px">${CAT[it.category]||''} ${esc(it.title)}</div>
+                <div style="font-size:0.78rem;color:${done?'var(--sage)':'var(--text-light)'}">${done?'✓ Done':'On the list'}</div>`;
+            if(done&&it.completedData){const cd=it.completedData;
+                if(cd.photos?.length)pop+=`<img style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin:5px 0" src="${cd.photos[0]}">`;
+                if(cd.notes)pop+=`<div style="font-size:0.82rem;font-style:italic">"${esc(cd.notes.substring(0,80))}${cd.notes.length>80?'...':''}"</div>`;
+                pop+=`<div style="color:var(--warm);margin-top:3px">${'★'.repeat(cd.rating||0)}${'☆'.repeat(5-(cd.rating||0))}</div>`}
+            pop+='</div>';mk.bindPopup(pop,{maxWidth:240});mk.addTo(map);markers.push(mk);
+            bounds.push([it.coords.lat,it.coords.lng])
+        }
+    }
+    if(bounds.length===1)map.setView(bounds[0],6);
+    else if(bounds.length>1)map.fitBounds(bounds,{padding:[30,30]});
+}
+
+function showConfetti(){
+    const c=document.getElementById('confetti'),bits=['🎉','✨','⭐','🎊','✦','●','◆'];
+    for(let i=0;i<30;i++){const p=document.createElement('div');p.className='confetti-piece';
+        p.textContent=bits[Math.floor(Math.random()*bits.length)];
+        p.style.left=Math.random()*100+'%';p.style.animationDelay=Math.random()*1+'s';
+        p.style.fontSize=(Math.random()*14+10)+'px';c.appendChild(p)}
+    setTimeout(()=>{c.innerHTML=''},4000);
+}
+
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('active')})});
+
+function openSettings(){
+    document.getElementById('settings-name1').value=appData.users.name1;
+    document.getElementById('settings-name2').value=appData.users.name2;
+    document.getElementById('settings-panel').classList.add('active');
+}
+function closeSettings(){document.getElementById('settings-panel').classList.remove('active')}
+function saveSettings(){
+    const n1=document.getElementById('settings-name1').value.trim(),n2=document.getElementById('settings-name2').value.trim();
+    if(n1&&n2){appData.users={name1:n1,name2:n2};saveData();initApp();closeSettings()}
+}
+function exportData(){
+    const b=new Blob([JSON.stringify(appData,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='our-bucket-list-backup.json';a.click();
+}
+function importData(input){
+    const file=input.files[0];if(!file)return;const r=new FileReader();
+    r.onload=e=>{try{const d=JSON.parse(e.target.result);
+        if(d.users&&d.items){if(confirm('This will replace all current data. Continue?')){appData=d;saveData();initApp();renderBucket();renderMemories();alert('Data imported!')}}
+        else{alert('Invalid file format')}}catch(err){alert('Could not read file')}};r.readAsText(file);input.value='';
+}
+function clearAllData(){if(confirm('Delete everything? This can\'t be undone.')){if(confirm('Really sure?')){localStorage.removeItem(STORAGE_KEY);location.reload()}}}
+
+loadData();
+if(appData.users.name1&&appData.users.name2){
+    document.getElementById('setup-screen').style.display='none';
+    document.getElementById('app').classList.add('active');initApp();
+}
+</script>
+</body>
+</html>
